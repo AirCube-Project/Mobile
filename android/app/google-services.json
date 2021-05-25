@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "533588565528",
+    "project_id": "aircube",
+    "storage_bucket": "aircube.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:533588565528:android:cff3f8baef8214f347ed6d",
+        "android_client_info": {
+          "package_name": "tech.aircube.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "533588565528-gt6cvsjj9fjkn62n961c9c3gtb969r79.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhYvC-gXLx6OyKkX76MYiD9ej-fvHpAGQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "533588565528-gt6cvsjj9fjkn62n961c9c3gtb969r79.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
