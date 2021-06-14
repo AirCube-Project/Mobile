@@ -206,7 +206,7 @@ class _SurveySecondState extends State<SurveySecond> {
                             child: Text('Назад'),
                           ),
                           onPressed: () {
-                            goBack();
+                            goBack(context);
                           },
                           style: OutlinedButton.styleFrom(
                               shape: RoundedRectangleBorder(

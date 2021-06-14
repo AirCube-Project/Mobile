@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:aircube/model/survey.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:uuid/uuid.dart';
 
 enum Gender { female, male }
@@ -23,6 +26,10 @@ class Event {
 
   Event(this.name, this.start, this.duration, this.color, this.step) {
     this.id = Uuid().v4();
+    print("Creating event");
+    print("Start is ${this.start}");
+    print("Duration is ${this.duration}");
+    print("Color is $color");
   }
 
   @override
@@ -41,6 +48,8 @@ class Link {
 
 class ApplicationState with ChangeNotifier {
   String uuid;
+
+  String lastRoute;
 
   var activityNames = [
     EventDescription("Завтрак", Color.fromRGBO(0x34, 0xE0, 0x50, 1.0)),
@@ -119,6 +128,24 @@ class ApplicationState with ChangeNotifier {
     // notifyListeners();
   }
 
+  double timerValue;
+
+  double initialTimerValue;
+
+  int timerDirection;
+
+  int _focusTask;
+
+  Timer timer;
+
+  DateTime timerStart;
+
+  set focusTask(int task) {
+    _focusTask = task;
+  }
+
+  int get focusTask => _focusTask;
+
   ApplicationState() {
     uuid = Uuid().v4();
     step = 0;
@@ -170,9 +197,91 @@ class ApplicationState with ChangeNotifier {
   String _educationLevel;
   TimeOfDay _awakeTime;
   TimeOfDay _sleepTime;
-  String token;
-  String name;
+  String _token;
+  String _name;
+  String _photo;
   Survey survey;
+  GoogleSignInAccount _user;
+  GoogleSignIn googleSignIn;
+  DateTime _lastUpdated;
+  String _gitlabServer;
+  String _trelloKey;
+  String _trelloToken;
+  String _githubToken;
+  String _gitlabToken;
+  String _connectionCode;
+
+  set connectionCode(String v) {
+    _connectionCode = v;
+    notifyListeners();
+  }
+
+  String get connectionCode => _connectionCode;
+
+  set name(String v) {
+    _name = v;
+    notifyListeners();
+  }
+
+  String get name => _name;
+
+  set photo(String v) {
+    _photo = v;
+    notifyListeners();
+  }
+
+  String get photo => _photo;
+
+  set gitlabServer(String server) {
+    this._gitlabServer = server;
+    notifyListeners();
+  }
+
+  String get gitlabServer => _gitlabServer;
+
+  set gitlabToken(String server) {
+    this._gitlabToken = server;
+    notifyListeners();
+  }
+
+  String get gitlabToken => _gitlabToken;
+
+  set githubToken(String server) {
+    this._githubToken = server;
+    notifyListeners();
+  }
+
+  String get githubToken => _githubToken;
+
+  set trelloToken(String server) {
+    this._trelloToken = server;
+    notifyListeners();
+  }
+
+  String get trelloToken => _trelloToken;
+
+  set trelloKey(String key) {
+    this._trelloKey = key;
+    notifyListeners();
+  }
+
+  String get trelloKey => _trelloKey;
+
+  set lastUpdated(DateTime now) {
+    _lastUpdated = now;
+    notifyListeners();
+  }
+
+  DateTime get lastUpdated {
+    return _lastUpdated;
+}
+
+  set token(String token) {
+    _token = token;
+    notifyListeners();
+  }
+
+  String get token => this._token;
 
   set awakeTime(TimeOfDay _awakeTime) {
     this._awakeTime = _awakeTime;
@@ -183,6 +292,13 @@ class ApplicationState with ChangeNotifier {
     this._sleepTime = _sleepTime;
     notifyListeners();
   }
+
+  set user(GoogleSignInAccount user) {
+    _user = user;
+    notifyListeners();
+  }
+
+  GoogleSignInAccount get user => _user;
 
   TimeOfDay get awakeTime => this._awakeTime;
 

@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "533588565528-g7oo0lr2a5pbuciqkcme2rj1ne656j58.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "tech.aircube.mobile",
+            "certificate_hash": "7cf7629a54cc465f99c9e58fe077586fe86110b0"
+          }
+        },
+        {
           "client_id": "533588565528-gt6cvsjj9fjkn62n961c9c3gtb969r79.apps.googleusercontent.com",
           "client_type": 3
         }

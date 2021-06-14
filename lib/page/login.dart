@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:health/health.dart';
 import 'package:provider/provider.dart';
 import '../widget/beauty_button.dart';
 import '../model/state.dart';
@@ -19,7 +20,7 @@ GoogleSignIn _googleSignIn = GoogleSignIn(
   // clientId:
   //     "533588565528-gt6cvsjj9fjkn62n961c9c3gtb969r79.apps.googleusercontent.com",
   scopes: <String>[
-    'email',
+    'email'
   ],
 );
 
@@ -58,8 +59,31 @@ class _LoginPageState extends State<LoginPage> {
   Future<bool> login(email, password) async {
     var data = {"email": email, "password": password};
     try {
-      await dio.post(publicPrefix + "/accounts/auth", data: json.encode(data));
-      return true;
+      var response = await dio.post(publicPrefix + "/accounts/auth", data: json.encode(data));
+      var state = Provider.of<ApplicationState>(context, listen: false);
+      state.token = response.data["token"];
+
+      dio = Dio(BaseOptions(headers: {'Authorization': 'bearer ' + state.token}))
+        ..interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+      Future.delayed(Duration(milliseconds: 10), () async {
+        var profile = await dio.get(securePrefix + "/profile");
+        print("After logged");
+        var profileData = await profile.data;
+
+        state.name = profileData["name"];
+        state.photo = profileData["photo"];
+
+        print(response.data["survey"]["completed"]);
+        if (response.data["survey"]["completed"] == 1) {
+          state.survey = Survey.fromJSON(response.data["survey"]);
+          print("Survey is got ");
+          print(state.survey);
+          gotoPage(context, routeToday);
+        } else {
+          gotoPage(context, routeSurveyFirst);
+        }
+      });
+        return true;
     } catch (Exception) {
       return false;
     }
@@ -75,53 +99,103 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void loggedIn(GoogleSignInAccount account) async {
+    var signIn = {
+      "email": account.email,
+      "name": account.displayName,
+      "hash": account.hashCode
+    };
+    // try {
+    var response = await dio.post(
+        publicPrefix + "/accounts/auth_google", data: json.encode(signIn));
+    setState(() {
+      message = null;
+      print("Congrats, email is " + account.email);
+    });
+    var state = Provider.of<ApplicationState>(context, listen: false);
+
+    state.googleSignIn = _googleSignIn;
+    print(response.data);
+    state.name = response.data["data"]["name"];
+    state.token = response.data["token"];
+    state.user = account;
+    print(state.name);
+    print(state.token);
+
+    //get profile
+
+    var name = account.displayName;
+    var photo = account.photoUrl;
+    dio = Dio(BaseOptions(headers: {'Authorization': 'bearer ' + state.token}))
+      ..interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+    var profile = await dio.get(securePrefix+"/profile");
+    print("After logged");
+    var profileData = await profile.data;
+    if (profileData["name"]==null) {
+      //скопировать из google-авторизации
+      var data = {"name": name};
+      await dio.put(securePrefix+"/profile", data: json.encode(data));
+      state.name = name;
+    } else {
+      state.name = profileData["name"];
+    }
+    if (profileData["photo"]==null) {
+      //сохранить ссылку на фотографию в google
+      var data = {"photo": photo};
+      await dio.put(securePrefix+"/profile", data: json.encode(data));
+      state.photo = photo;
+    } else {
+      state.photo = profileData["photo"];
+    }
+
+    print(response.data["survey"]["completed"]);
+    if (response.data["survey"]["completed"]==1) {
+      state.survey = Survey.fromJSON(response.data["survey"]);
+      print("Survey is got ");
+      print(state.survey);
+      gotoPage(context, routeToday);
+    } else {
+      gotoPage(context, routeSurveyFirst);
+    }
+    // } catch (Exception) {
+    //   setState(() {
+    //     message = "Учётная запись не привязана к Google";
+    //   });
+    // }
+  }
+
+  var showUI = false;
+
   @override
   void initState() {
     super.initState();
-    dio = Dio()..interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+    dio = Dio()
+      ..interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
 
-
-    _googleSignIn.onCurrentUserChanged.listen((
-        GoogleSignInAccount account) async {
-      if (account != null) {
-        var signIn = {
-          "email": account.email,
-          "name": account.displayName,
-          "hash": account.hashCode
-        };
-        // try {
-          var response = await dio.post(
-              publicPrefix + "/accounts/auth_google", data: json.encode(signIn));
+    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount account) async {
+      loggedIn(account);
+    });
+    Future.delayed(Duration(microseconds: 10), () async {
+      if (await _googleSignIn.isSignedIn()) {
+        print("SIGNED");
+        _googleSignIn.signInSilently();
+        Future.delayed(Duration(seconds: 3), () {
           setState(() {
-            message = null;
-            print("Congrats, email is " + account.email);
+            showUI = true;
           });
-          var state = Provider.of<ApplicationState>(context, listen: false);
-          print(response.data);
-          state.name = response.data["data"]["name"];
-          state.token = response.data["token"];
-          print(state.name);
-          print(state.token);
-          if (response.data["survey"]["completed"]==1) {
-            state.survey = Survey.fromJSON(response.data["survey"]);
-            gotoPage(context, routeToday);
-          } else {
-            gotoPage(context, routeSurveyFirst);
-          }
-        // } catch (Exception) {
-        //   setState(() {
-        //     message = "Учётная запись не привязана к Google";
-        //   });
-        // }
+        });
+      } else {
+        setState(() {
+          showUI = true;
+        });
       }
     });
-    // _googleSignIn.signInSilently();
-  }
+      }
 
   @override
   Widget build(BuildContext context) {
     var mq = MediaQuery.of(context);
-    return KeyboardVisibilityBuilder(builder: (context, isKeyboardVisible) {
+    return showUI ? KeyboardVisibilityBuilder(builder: (context, isKeyboardVisible) {
       return Stack(
         children: [
           Center(
@@ -337,19 +411,7 @@ class _LoginPageState extends State<LoginPage> {
                                 .of(context)
                                 .errorColor),
                           )),
-                    if (_currentUser != null)
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            GoogleUserCircleAvatar(identity: _currentUser),
-                            Text(_currentUser.email),
-                            ElevatedButton(
-                              onPressed: () {
-                                _googleSignIn.disconnect();
-                              },
-                              child: Text("Выход"),
-                            )
-                          ]),
+
                   ],
                 ),
               )),
@@ -406,6 +468,6 @@ class _LoginPageState extends State<LoginPage> {
           )
         ],
       );
-    });
+    }) : Center(child: SizedBox(width: 64, height: 64, child: CircularProgressIndicator()),);
   }
 }
