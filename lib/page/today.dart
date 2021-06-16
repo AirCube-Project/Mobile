@@ -260,7 +260,10 @@ class TaskWidget extends StatelessWidget {
                                   var tod = TimeOfDay(hour: hours, minute: mins);
                                   switch (value) {
                                     case SET_TIME:
-                                      var time = await showTimePicker(context: context, initialTime: tod);
+                                      var time = await showTimePicker(
+                                        context: context,
+                                        initialTime: tod,
+                                      );
                                       if (time != null) {
                                         setTime(time);
                                       }
@@ -274,6 +277,7 @@ class TaskWidget extends StatelessWidget {
                                         initialDate: todayMode ? DateTime.now().add(Duration(days: 1)) : DateTime.now(),
                                         firstDate: todayMode ? DateTime.now().add(Duration(days: 1)) : DateTime.now(),
                                         lastDate: DateTime.now().add(Duration(days: 365)),
+                                        locale: const Locale('ru', 'RU'),
                                       );
                                       if (result != null) {
                                         //change date in task list
@@ -401,7 +405,6 @@ class _TodayState extends State<Today> {
 
     return Scaffold(
         backgroundColor: Colors.white,
-
         bottomNavigationBar: buildNavBar(context, 0),
         floatingActionButton: SpeedDial(
             icon: Icons.add,
@@ -436,7 +439,7 @@ class _TodayState extends State<Today> {
                     Icons.note_add,
                     color: Colors.white,
                   ),
-                  backgroundColor: Theme.of(context).primaryColorDark,
+                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.7),
                   label: "Создать из шаблона",
                   labelStyle: TextStyle(fontSize: 14.0),
                   onTap: () async {
@@ -455,7 +458,13 @@ class _TodayState extends State<Today> {
                         });
                       }, searchHint: "Поиск");
                     }
-                  })
+                  }),
+              SpeedDialChild(
+                  child: Icon(Icons.psychology_outlined, color: Colors.white),
+                  backgroundColor: Theme.of(context).primaryColorDark,
+                  label: "Медитация",
+                  labelStyle: TextStyle(fontSize: 14.0),
+                  onTap: () async {}),
             ]),
 
         // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Будет доступно в следующем обновлении")));
@@ -527,22 +536,19 @@ class _TodayState extends State<Today> {
                         if (task.closed != true)
                           TaskWidget(task, today, true, (DateTime newDate) async {
                             //изменение даты
-                            setState(() {
-                              setDate(context, task, newDate);
-                              lastUpdated = DateTime.now();
-                            });
+                            setDate(context, task, newDate) {
+                              setState(() {});
+                            }
                           }, (TimeOfDay newTime) async {
                             var now = DateTime.now();
                             var tm = DateTime(now.year, now.month, now.day, newTime.hour, newTime.minute);
                             //generate datetime from today and time
-                            setState(() {
-                              setTime(context, task, tm);
-                              lastUpdated = DateTime.now();
+                            setTime(context, task, tm, () {
+                              setState(() {});
                             });
                           }, () async {
-                            setState(() {
-                              setAutoTime(context, task);
-                              lastUpdated = DateTime.now();
+                            setAutoTime(context, task, () {
+                              setState(() {});
                             });
                           }, () async {
                             //start
@@ -625,26 +631,25 @@ class _TodayState extends State<Today> {
                         if (task.closed == true)
                           TaskWidget(task, today, true, (DateTime newDate) async {
                             //изменение даты
-                            setState(() {
-                              setDate(context, task, newDate);
+                            setDate(context, task, newDate, () {
+                              setState(() {});
                             });
                           }, (TimeOfDay newTime) async {
                             var now = DateTime.now();
                             var tm = DateTime(now.year, now.month, now.day, newTime.hour, newTime.minute);
                             //generate datetime from today and time
-                            setState(() {
-                              setTime(context, task, tm);
-                              lastUpdated = DateTime.now();
+                            setTime(context, task, tm, () {
+                              setState(() {});
                             });
                           }, () async {
-                            setState(() {
-                              setAutoTime(context, task);
-                              lastUpdated = DateTime.now();
+                            setAutoTime(context, task, () {
+                              print("Setting state");
+                              setState(() {});
                             });
                           }, () async {
                             //start
                             await Navigator.of(context).pushNamed(routeDetails, arguments: IDArguments(task.id));
-                            lastUpdated = DateTime.now();
+                            setState(() {});
                           }, () async {
                             //score
                             var score = await Navigator.of(context).pushNamed(routeScoring, arguments: IDArguments(task.id));
